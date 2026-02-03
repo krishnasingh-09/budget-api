@@ -24,7 +24,7 @@ transactionRouter.get('/', (req: AuthRequest, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
 
-  if (page < 0){
+  if (page < 1) {
     res.status(400).json({ error: 'page must be a positive integer' });
     return;
   }
