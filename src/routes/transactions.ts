@@ -40,6 +40,7 @@ transactionRouter.get('/', (req: AuthRequest, res: Response) => {
   const categoryId = req.query.category_id as string | undefined;
   const startDate = req.query.start_date as string | undefined;
   const endDate = req.query.end_date as string | undefined;
+  const search = req.query.search as string | undefined;
 
   let query = 'SELECT * FROM transactions WHERE user_id = ?';
   const params: any[] = [userId];
@@ -60,6 +61,10 @@ transactionRouter.get('/', (req: AuthRequest, res: Response) => {
     query += ' AND date <= ?';
     params.push(endDate);
   }
+  if (search) {
+  query += ' AND description LIKE ?';
+  params.push(`%${search}%`);
+}
 
   const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as count');
   const total = (db.prepare(countQuery).get(...params) as { count: number }).count;
