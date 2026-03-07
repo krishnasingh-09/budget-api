@@ -184,3 +184,45 @@ transactionRouter.delete('/:id', (req: AuthRequest, res: Response) => {
   );
   res.status(204).send();
 });
+
+// GET /transactions/export?type=expense&start_date=2024-01-01
+transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
+  const userId = req.userId!;
+  const db = getDb();
+
+  const type = req.query.type as string | undefined;
+  const startDate = req.query.start_date as string | undefined;
+  const endDate = req.query.end_date as string | undefined;
+
+  let query = 'SELECT * FROM transactions WHERE user_id = ?';
+  const params: any[] = [userId];
+
+  if (type && ['income', 'expense'].includes(type)) {
+    query += ' AND type = ?';
+    params.push(type);
+  }
+  if (startDate) {
+    query += ' AND date >= ?';
+    params.push(startDate);
+  }
+  if (endDate) {
+    query += ' AND date <= ?';
+    params.push(endDate);
+  }
+
+  query += ' ORDER BY date DESC';
+
+  const transactions = db.prepare(query).all(...params) as any[];
+
+  // Build CSV
+  const headers = ['id', 'amount', 'description', 'type', 'date'];
+  const rows = transactions.map((t) =>
+    headers.map((h) => t[h]).join(',')
+  );
+
+  const csv = [headers.join(','), ...rows].join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="transactions.csv"');
+  res.send(csv);
+});
