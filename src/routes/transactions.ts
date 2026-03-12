@@ -217,8 +217,11 @@ transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
   // Build CSV
   const headers = ['id', 'amount', 'description', 'type', 'date'];
   const rows = transactions.map((t) =>
-    headers.map((h) => t[h]).join(',')
-  );
+  headers.map((h) => {
+    const val = String(t[h] ?? '');
+    return val.includes(',') ? `"${val}"` : val;
+  }).join(',')
+);
 
   const csv = [headers.join(','), ...rows].join('\n');
 
