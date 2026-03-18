@@ -153,3 +153,55 @@ summaryRouter.get('/top-categories', (req: AuthRequest, res: Response) => {
 
   res.json(results);
 });
+
+// GET /summary/yearly?year=2024
+summaryRouter.get('/yearly', (req: AuthRequest, res: Response) => {
+  const year = req.query.year as string;
+
+  if (!year || !/^\d{4}$/.test(year)) {
+    res.status(400).json({ error: 'year parameter required in YYYY format' });
+    return;
+  }
+
+  const db = getDb();
+  const userId = req.userId!;
+
+  // Get monthly breakdown for the year
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = String(i + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
+
+  const breakdown = months.map((month) => {
+    const startDate = `${month}-01`;
+    const lastDay = new Date(
+      parseInt(year),
+      parseInt(month.split('-')[1]),
+      0
+    ).getDate();
+    const endDate = `${month}-${String(lastDay).padStart(2, '0')}`;
+
+    const totals = db.prepare(`
+      SELECT type, SUM(amount) as total
+      FROM transactions
+      WHERE user_id = ? AND date >= ? AND date <= ?
+      GROUP BY type
+    `).all(userId, startDate, endDate) as { type: string; total: number }[];
+
+    const income = totals.find((r) => r.type === 'income')?.total ?? 0;
+    const expenses = totals.find((r) => r.type === 'expense')?.total ?? 0;
+
+    return { month, income, expenses, net: income - expenses };
+  });
+
+  const totalIncome = breakdown.reduce((sum, m) => sum + m.income, 0);
+  const totalExpenses = breakdown.reduce((sum, m) => sum + m.expenses, 0);
+
+  res.json({
+    year,
+    total_income: totalIncome,
+    total_expenses: totalExpenses,
+    net: totalIncome - totalExpenses,
+    monthly_breakdown: breakdown,
+  });
+});
