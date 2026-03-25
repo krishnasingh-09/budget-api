@@ -175,10 +175,10 @@ summaryRouter.get('/yearly', (req: AuthRequest, res: Response) => {
   const breakdown = months.map((month) => {
     const startDate = `${month}-01`;
     const lastDay = new Date(
-      parseInt(year),
-      parseInt(month.split('-')[1]),
-      0
-    ).getDate();
+  parseInt(year),
+  parseInt(month.split('-')[1]) - 1 + 1,
+  0
+).getDate();
     const endDate = `${month}-${String(lastDay).padStart(2, '0')}`;
 
     const totals = db.prepare(`
