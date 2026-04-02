@@ -13,6 +13,7 @@ const TransactionSchema = z.object({
   type: z.enum(['income', 'expense']),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   category_id: z.string().uuid().optional(),
+  is_recurring: z.boolean().optional(),
 });
 
 // GET /transactions — with pagination, filtering, date range
@@ -41,6 +42,7 @@ transactionRouter.get('/', (req: AuthRequest, res: Response) => {
   const startDate = req.query.start_date as string | undefined;
   const endDate = req.query.end_date as string | undefined;
   const search = req.query.search as string | undefined;
+  const recurring = req.query.recurring as string | undefined;
 
   let query = 'SELECT * FROM transactions WHERE user_id = ?';
   const params: any[] = [userId];
@@ -62,9 +64,14 @@ transactionRouter.get('/', (req: AuthRequest, res: Response) => {
     params.push(endDate);
   }
   if (search) {
-  query += ' AND description LIKE ?';
-  params.push(`%${search}%`);
-}
+    query += ' AND description LIKE ?';
+    params.push(`%${search}%`);
+  }
+  if (recurring === 'true') {
+    query += ' AND is_recurring = 1';
+  } else if (recurring === 'false') {
+    query += ' AND is_recurring = 0';
+  }
 
   const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as count');
   const total = (db.prepare(countQuery).get(...params) as { count: number }).count;
@@ -107,7 +114,7 @@ transactionRouter.post('/', (req: AuthRequest, res: Response) => {
     return;
   }
 
-  const { amount, description, type, date, category_id } = parsed.data;
+  const { amount, description, type, date, category_id, is_recurring } = parsed.data;
   const db = getDb();
 
   if (category_id) {
@@ -122,8 +129,8 @@ transactionRouter.post('/', (req: AuthRequest, res: Response) => {
 
   const id = uuidv4();
   db.prepare(
-    'INSERT INTO transactions (id, user_id, category_id, amount, description, type, date) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run(id, req.userId!, category_id ?? null, amount, description, type, date);
+    'INSERT INTO transactions (id, user_id, category_id, amount, description, type, date, is_recurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, req.userId!, category_id ?? null, amount, description, type, date, is_recurring ? 1 : 0);
 
   const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
   res.status(201).json(tx);
@@ -151,7 +158,9 @@ transactionRouter.put('/:id', (req: AuthRequest, res: Response) => {
   const fields = Object.keys(updates)
     .map((k) => `${k} = ?`)
     .join(', ');
-  const values = Object.values(updates);
+  const values = Object.values(updates).map((v) =>
+    typeof v === 'boolean' ? (v ? 1 : 0) : v
+  );
 
   if (fields.length === 0) {
     res.status(400).json({ error: 'No fields to update' });
@@ -215,13 +224,13 @@ transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
   const transactions = db.prepare(query).all(...params) as any[];
 
   // Build CSV
-  const headers = ['id', 'amount', 'description', 'type', 'date'];
+  const headers = ['id', 'amount', 'description', 'type', 'date', 'is_recurring'];
   const rows = transactions.map((t) =>
-  headers.map((h) => {
-    const val = String(t[h] ?? '');
-    return val.includes(',') ? `"${val}"` : val;
-  }).join(',')
-);
+    headers.map((h) => {
+      const val = String(t[h] ?? '');
+      return val.includes(',') ? `"${val}"` : val;
+    }).join(',')
+  );
 
   const csv = [headers.join(','), ...rows].join('\n');
 
