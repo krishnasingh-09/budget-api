@@ -14,6 +14,7 @@ const TransactionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   category_id: z.string().uuid().optional(),
   is_recurring: z.boolean().optional(),
+   notes: z.string().max(500).optional(),
 });
 
 // GET /transactions — with pagination, filtering, date range
@@ -114,7 +115,7 @@ transactionRouter.post('/', (req: AuthRequest, res: Response) => {
     return;
   }
 
-  const { amount, description, type, date, category_id, is_recurring } = parsed.data;
+  const { amount, description, type, date, category_id, is_recurring, notes } = parsed.data;
   const db = getDb();
 
   if (category_id) {
@@ -129,8 +130,8 @@ transactionRouter.post('/', (req: AuthRequest, res: Response) => {
 
   const id = uuidv4();
   db.prepare(
-    'INSERT INTO transactions (id, user_id, category_id, amount, description, type, date, is_recurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(id, req.userId!, category_id ?? null, amount, description, type, date, is_recurring ? 1 : 0);
+  'INSERT INTO transactions (id, user_id, category_id, amount, description, type, date, is_recurring, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+).run(id, req.userId!, category_id ?? null, amount, description, type, date, is_recurring ? 1 : 0, notes ?? null);
 
   const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
   res.status(201).json(tx);
@@ -224,7 +225,7 @@ transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
   const transactions = db.prepare(query).all(...params) as any[];
 
   // Build CSV
-  const headers = ['id', 'amount', 'description', 'type', 'date', 'is_recurring'];
+  const headers = ['id', 'amount', 'description', 'type', 'date', 'is_recurring', 'notes'];
   const rows = transactions.map((t) =>
     headers.map((h) => {
       const val = String(t[h] ?? '');

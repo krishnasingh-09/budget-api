@@ -46,6 +46,7 @@ export function initDb(): void {
       type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
       date TEXT NOT NULL,
       is_recurring INTEGER NOT NULL DEFAULT 0,
+      notes TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
