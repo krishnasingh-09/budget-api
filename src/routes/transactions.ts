@@ -227,11 +227,11 @@ transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
   // Build CSV
   const headers = ['id', 'amount', 'description', 'type', 'date', 'is_recurring', 'notes'];
   const rows = transactions.map((t) =>
-    headers.map((h) => {
-      const val = String(t[h] ?? '');
-      return val.includes(',') ? `"${val}"` : val;
-    }).join(',')
-  );
+  headers.map((h) => {
+    const val = String(t[h] ?? '').replace(/\n/g, ' ').replace(/\r/g, '');
+    return val.includes(',') ? `"${val}"` : val;
+  }).join(',')
+);
 
   const csv = [headers.join(','), ...rows].join('\n');
 
