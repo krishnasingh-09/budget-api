@@ -50,17 +50,24 @@ summaryRouter.get('/monthly', (req: AuthRequest, res: Response) => {
     ORDER BY spent DESC
   `).all(userId, startDate, endDate) as any[];
 
-  res.json({
-    month,
-    income,
-    expenses,
-    net,
-    by_category: byCategory.map((c) => ({
-      ...c,
-      budget_remaining: c.budget_limit != null ? c.budget_limit - c.spent : null,
-      over_budget: c.budget_limit != null ? c.spent > c.budget_limit : false,
-    })),
-  });
+  // Count transactions for the month
+const txCount = db.prepare(`
+  SELECT COUNT(*) as count FROM transactions
+  WHERE user_id = ? AND date >= ? AND date <= ?
+`).get(userId, startDate, endDate) as { count: number };
+
+res.json({
+  month,
+  income,
+  expenses,
+  net,
+  transaction_count: txCount.count,
+  by_category: byCategory.map((c) => ({
+    ...c,
+    budget_remaining: c.budget_limit != null ? c.budget_limit - c.spent : null,
+    over_budget: c.budget_limit != null ? c.spent > c.budget_limit : false,
+  })),
+});
 });
 
 // GET /summary/range?start_date=2024-01-01&end_date=2024-03-31
