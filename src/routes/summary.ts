@@ -80,15 +80,21 @@ summaryRouter.get('/range', (req: AuthRequest, res: Response) => {
     return;
   }
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-    res.status(400).json({ error: 'Dates must be in YYYY-MM-DD format' });
-    return;
-  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+  res.status(400).json({ error: `Invalid start_date: "${startDate}". Expected format YYYY-MM-DD` });
+  return;
+}
+if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+  res.status(400).json({ error: `Invalid end_date: "${endDate}". Expected format YYYY-MM-DD` });
+  return;
+}
 
   if (startDate > endDate) {
-    res.status(400).json({ error: 'start_date must be before or equal to end_date' });
-    return;
-  }
+  res.status(400).json({ 
+    error: `start_date (${startDate}) must be before or equal to end_date (${endDate})` 
+  });
+  return;
+}
 
   const db = getDb();
   const userId = req.userId!;
