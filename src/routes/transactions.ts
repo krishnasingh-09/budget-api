@@ -212,13 +212,21 @@ transactionRouter.get('/export', (req: AuthRequest, res: Response) => {
     params.push(type);
   }
   if (startDate) {
-    query += ' AND date >= ?';
-    params.push(startDate);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    res.status(400).json({ error: `Invalid start_date: "${startDate}". Expected format YYYY-MM-DD` });
+    return;
   }
-  if (endDate) {
-    query += ' AND date <= ?';
-    params.push(endDate);
+  query += ' AND date >= ?';
+  params.push(startDate);
+}
+if (endDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    res.status(400).json({ error: `Invalid end_date: "${endDate}". Expected format YYYY-MM-DD` });
+    return;
   }
+  query += ' AND date <= ?';
+  params.push(endDate);
+}
 
   query += ' ORDER BY date DESC';
 
