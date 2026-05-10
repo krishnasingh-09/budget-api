@@ -44,11 +44,12 @@ budgetRouter.get('/', (req: AuthRequest, res: Response) => {
 
   const budgets = db.prepare(query).all(...params) as any[];
   const result = budgets.map((b) => ({
-    ...b,
-    remaining: b.amount - b.spent,
-    over_budget: b.spent > b.amount,
-    percentage_used: b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0,
-  }));
+  ...b,
+  remaining: b.amount - b.spent,
+  over_budget: b.spent > b.amount,
+  percentage_used: b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0,
+  alert: b.amount > 0 && (b.spent / b.amount) >= 0.8 ? 'warning' : null,
+}));
 
   res.json(result);
 });
