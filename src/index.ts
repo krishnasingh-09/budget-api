@@ -6,6 +6,7 @@ import { transactionRouter } from './routes/transactions';
 import { categoryRouter } from './routes/categories';
 import { summaryRouter } from './routes/summary';
 import { budgetRouter } from './routes/budgets';
+import { alertRouter } from './routes/alerts';
 
 export const app = express();
 
@@ -23,7 +24,7 @@ app.use('/transactions', transactionRouter);
 app.use('/categories', categoryRouter);
 app.use('/summary', summaryRouter);
 app.use('/budgets', budgetRouter);
-
+app.use('/alerts', alertRouter);
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
