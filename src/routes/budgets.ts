@@ -48,7 +48,13 @@ budgetRouter.get('/', (req: AuthRequest, res: Response) => {
   remaining: b.amount - b.spent,
   over_budget: b.spent > b.amount,
   percentage_used: b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0,
-  alert: b.amount > 0 && (b.spent / b.amount) >= 0.8 ? 'warning' : null,
+  alert: b.amount > 0
+  ? b.spent >= b.amount
+    ? 'over_budget'
+    : (b.spent / b.amount) >= 0.8
+      ? 'warning'
+      : null
+  : null,
 }));
 
   res.json(result);
