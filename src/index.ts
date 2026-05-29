@@ -7,36 +7,33 @@ import { categoryRouter } from './routes/categories';
 import { summaryRouter } from './routes/summary';
 import { budgetRouter } from './routes/budgets';
 import { alertRouter } from './routes/alerts';
+import { profileRouter } from './routes/profile';
+import { importRouter } from './routes/import';
+import { trendsRouter } from './routes/trends';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 export const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
 app.use('/auth', userRouter);
 app.use('/transactions', transactionRouter);
 app.use('/categories', categoryRouter);
 app.use('/summary', summaryRouter);
 app.use('/budgets', budgetRouter);
 app.use('/alerts', alertRouter);
-// 404 handler
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
+app.use('/profile', profileRouter);
+app.use('/import', importRouter);
+app.use('/trends', trendsRouter);
 
-// Error handler
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
-// Only start server if this file is run directly
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   initDb();
