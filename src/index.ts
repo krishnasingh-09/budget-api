@@ -11,6 +11,9 @@ import { profileRouter } from './routes/profile';
 import { importRouter } from './routes/import';
 import { trendsRouter } from './routes/trends';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { savingsRouter } from './routes/savings';
+import { auditRouter } from './routes/audit';
+import { recurringRouter } from './routes/recurring';
 
 export const app = express();
 
@@ -30,6 +33,9 @@ app.use('/alerts', alertRouter);
 app.use('/profile', profileRouter);
 app.use('/import', importRouter);
 app.use('/trends', trendsRouter);
+app.use('/savings', savingsRouter);
+app.use('/audit', auditRouter);
+app.use('/recurring', recurringRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
