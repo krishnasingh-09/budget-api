@@ -14,6 +14,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { savingsRouter } from './routes/savings';
 import { auditRouter } from './routes/audit';
 import { recurringRouter } from './routes/recurring';
+import { calculatorRouter } from './routes/calculator';
 
 export const app = express();
 
@@ -36,6 +37,7 @@ app.use('/trends', trendsRouter);
 app.use('/savings', savingsRouter);
 app.use('/audit', auditRouter);
 app.use('/recurring', recurringRouter);
+app.use('/calculator', calculatorRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
