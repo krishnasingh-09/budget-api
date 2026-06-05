@@ -6,3 +6,4 @@ dist/
 coverage/
 *.db-shm
 *.db-wal
+node_modules/
